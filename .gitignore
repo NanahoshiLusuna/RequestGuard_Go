@@ -1,0 +1,13 @@
+# Local configuration and secrets
+requestguard.env
+.env
+
+# Runtime data
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Build artifacts
+requestguard
+requestguard.exe
