@@ -1,6 +1,10 @@
-# RequestGuard
+# RequestGuard Go
 
-**RequestGuard is a lightweight Go HTTP reverse proxy for IP reputation filtering, country-based policies, rate limiting, and temporary IP bans.**
+> **Go HTTP reverse proxy for IP reputation, country-based filtering, rate limiting, IP blocking, and AbuseIPDB integration.**
+
+This repository is the Go implementation of RequestGuard. The earlier Python implementation is available in [RequestGuard](https://github.com/NanahoshiLusuna/RequestGuard).
+
+**RequestGuard Go is a lightweight HTTP reverse proxy for IP reputation filtering, country-based policies, rate limiting, and temporary IP bans.**
 
 It sits in front of a local application and forwards allowed requests to `127.0.0.1`. It is designed for small self-hosted services, home servers, and deployments that need a simple **IP filtering and request protection layer** without a large security stack.
 
@@ -296,4 +300,4 @@ RequestGuard_Go/
 
 ## License
 
-See the repository for the current license information.
+No license file is currently included in this repository.
