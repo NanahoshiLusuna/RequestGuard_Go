@@ -31,6 +31,19 @@ Python 구현은 [RequestGuard](https://github.com/NanahoshiLusuna/RequestGuard)
 - **CGO 없이 빌드 가능한 정적 바이너리**
 - Linux ARM64 및 **Termux** 지원
 
+## Go 구현의 장점과 Python 버전
+
+Go 버전은 **배포와 장기 실행 서버 운영을 단순하게 만들기 좋은 구조**가 장점입니다.
+
+- **단일 바이너리 배포** — 빌드한 `requestguard` 실행 파일을 대상 장치에 복사하여 사용할 수 있습니다.
+- **런타임 의존성 감소** — 대상 장치에 Go를 설치할 필요가 없고, 빌드 시 `CGO_ENABLED=0`으로 정적 바이너리를 만들 수 있습니다.
+- **서버 배포에 편리함** — 설정 파일과 실행 바이너리를 함께 배치하는 방식으로 구성하기 쉽습니다.
+- **Linux ARM64 / Termux 지원** — Android/Termux 같은 환경에 빌드된 실행 파일을 바로 배포할 수 있습니다.
+
+반대로 정책이나 프록시 로직을 수정할 때는 Go 바이너리를 다시 빌드해야 합니다. **소스를 자주 직접 수정하고 빠르게 실험하려면 Python 버전이 편리할 수 있습니다.**
+
+→ **Python 버전:** [RequestGuard](https://github.com/NanahoshiLusuna/RequestGuard)
+
 ## 작동 방식
 
 ```text
@@ -322,6 +335,19 @@ The Python implementation is available in [RequestGuard](https://github.com/Nana
 - **CGO-free static builds**
 - Linux ARM64 and **Termux** support
 
+## Why use the Go version?
+
+The Go version is useful when you want **simple deployment and a self-contained server binary**.
+
+- **Single-binary deployment** — copy the built `requestguard` executable to the target machine.
+- **Fewer runtime requirements** — Go does not need to be installed on the target device, and `CGO_ENABLED=0` can produce a static binary.
+- **Convenient server deployment** — the binary and configuration file can be deployed together.
+- **Linux ARM64 / Termux support** — build for the target platform and run the resulting executable directly.
+
+The trade-off is that source changes require rebuilding the Go binary. For **frequent source edits and quick experimentation**, the Python version may be more convenient.
+
+→ **Python version:** [RequestGuard](https://github.com/NanahoshiLusuna/RequestGuard)
+
 ## How it works
 
 ```text
@@ -612,6 +638,19 @@ Python実装は [RequestGuard](https://github.com/NanahoshiLusuna/RequestGuard) 
 - ブロック、レピュテーション、確認、クリーンアップ用CLI
 - **CGOなしでビルドできる静的バイナリ**
 - Linux ARM64 および **Termux** 対応
+
+## Go版のメリット
+
+Go版は、**配布とサーバー運用をシンプルにしやすいこと**がメリットです。
+
+- **単一バイナリで配布可能** — ビルドした `requestguard` 実行ファイルを対象端末へコピーして使用できます。
+- **実行時の依存を減らせる** — 対象端末にGoをインストールする必要がなく、`CGO_ENABLED=0` で静的バイナリを作成できます。
+- **サーバーへ配置しやすい** — 実行ファイルと設定ファイルをまとめて配置する構成にできます。
+- **Linux ARM64 / Termux対応** — 対象環境向けにビルドした実行ファイルをそのまま利用できます。
+
+一方、ソースやポリシーを変更した場合はGoバイナリの再ビルドが必要です。**頻繁にソースを変更して試したい場合はPython版が便利です。**
+
+→ **Python版:** [RequestGuard](https://github.com/NanahoshiLusuna/RequestGuard)
 
 ## 動作方式
 
