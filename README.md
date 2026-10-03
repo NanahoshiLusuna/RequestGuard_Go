@@ -1,25 +1,23 @@
 # RequestGuard
 
-**RequestGuard is a lightweight Go reverse proxy that filters incoming requests using IP reputation, country-based policies, rate limiting, and temporary IP bans.**
+**RequestGuard is a lightweight Go HTTP reverse proxy for IP reputation filtering, country-based policies, rate limiting, and temporary IP bans.**
 
-It runs in front of a local application and forwards allowed requests to `127.0.0.1`.
-
-RequestGuard is designed for small self-hosted services, home servers, and applications that need a simple **IP filtering and request protection layer** without running a large security stack.
+It sits in front of a local application and forwards allowed requests to `127.0.0.1`. It is designed for small self-hosted services, home servers, and deployments that need a simple **IP filtering and request protection layer** without a large security stack.
 
 ## Features
 
-* **IP reputation checking** with [AbuseIPDB](https://www.abuseipdb.com/)
-* **Country-based request policies**
-* **IP blocking and temporary bans**
-* **Per-IP rate limiting**
-* **IP reputation caching**
-* **Whitelist support**
-* **SQLite-based persistent storage**
-* **Reverse proxy** to local applications
-* **All-port forwarding** with `LISTEN_PORTS=all`
-* CLI commands for inspecting bans and reputation data
-* **Single static binary** with `CGO_ENABLED=0`
-* Linux ARM64 support, including **Termux**
+- **IP reputation checking** with [AbuseIPDB](https://www.abuseipdb.com/)
+- **Country-based request policies**
+- **Temporary IP bans**
+- **Per-IP rate limiting**
+- **IP reputation caching**
+- **IP and MAC whitelist support**
+- **SQLite persistent storage**
+- **HTTP reverse proxy** to local applications
+- **Same-port forwarding** with `LISTEN_PORTS=all` or selected ports/ranges
+- CLI commands for bans, reputation, checks, and cleanup
+- **CGO-free static binary** builds
+- Linux ARM64 support, including **Termux**
 
 ## How it works
 
@@ -27,47 +25,44 @@ RequestGuard is designed for small self-hosted services, home servers, and appli
 Internet
    │
    ▼
-┌──────────────────────┐
-│     RequestGuard     │
-│                      │
-│ IP reputation        │
-│ Country policy       │
-│ Rate limiting        │
-│ Ban / whitelist      │
-└──────────┬───────────┘
-           │
-           ▼
-     127.0.0.1
-     Local application
+┌─────────────────────────┐
+│       RequestGuard      │
+│                         │
+│ IP reputation           │
+│ Country policy          │
+│ Rate limiting           │
+│ Ban / whitelist         │
+│ Request filtering       │
+└────────────┬────────────┘
+             │ allowed requests
+             ▼
+       127.0.0.1
+       Local application
 ```
 
-Incoming requests are checked before they reach the local application.
+For a previously unseen public IP, RequestGuard can query AbuseIPDB for country and abuse-confidence information. The result is evaluated against the configured country, reputation, ban, and rate-limit policies.
 
-For a new public IP, RequestGuard can query AbuseIPDB to obtain its country and abuse confidence score.
-
-The result is then evaluated against the configured country, reputation, ban, and rate-limit policies.
-
-If a request passes the checks, it is forwarded to the configured local application.
+If the request passes the checks, RequestGuard forwards it to the configured local application.
 
 ## Policy example
 
-The default configuration separates IPs into three policy groups:
+The default configuration provides three policy groups:
 
-| Policy | Countries     | Reputation threshold | Rate limit |
-| ------ | ------------- | -------------------: | ---------: |
-| Trust  | KR, JP        |                   90 |   60 req/s |
-| Mixed  | US            |                   75 |   30 req/s |
-| Low    | CN and others |                   25 |   10 req/s |
+| Policy | Countries | Reputation threshold | Rate limit |
+| --- | --- | ---: | ---: |
+| Trust | KR, JP | 90 | 60 req/s |
+| Mixed | US | 75 | 30 req/s |
+| Low | CN and others | 25 | 10 req/s |
 
 These values are configurable through environment variables.
 
-**The default policy is only an example. Adjust it for your own deployment.**
+> **Note:** The default policy is an example, not a universal security recommendation. Adjust it for your deployment and expected traffic.
 
 ## Requirements
 
-* Go **1.22+** for building
-* An AbuseIPDB API key
-* A local application listening on `127.0.0.1`
+- Go **1.22+** for building
+- An AbuseIPDB API key
+- A local application listening on `127.0.0.1`
 
 Go does not need to be installed on the target device if you build the binary elsewhere.
 
@@ -86,17 +81,13 @@ Build a native binary:
 CGO_ENABLED=0 go build -o requestguard ./cmd/requestguard
 ```
 
-The resulting `requestguard` binary can be copied to the target machine.
-
 ### Linux ARM64 / Termux
-
-Build an ARM64 Linux binary:
 
 ```sh
 CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o requestguard ./cmd/requestguard
 ```
 
-Copy the binary to the device together with `requestguard.env`.
+Copy the resulting binary and `requestguard.env` to the target device.
 
 ## Configuration
 
@@ -112,7 +103,7 @@ Set your AbuseIPDB API key:
 ABUSEIPDB_API_KEY=your_api_key
 ```
 
-The main configuration options include:
+Example configuration:
 
 ```env
 LISTEN_HOST=0.0.0.0
@@ -139,9 +130,11 @@ RATE_LIMIT_PER_SEC=30
 WHITELIST=
 ```
 
+See `requestguard.env.example` for the complete configuration reference.
+
 ### Important
 
-The application behind RequestGuard should listen on:
+The application behind RequestGuard should normally listen on:
 
 ```text
 127.0.0.1
@@ -157,35 +150,35 @@ Start RequestGuard:
 ./requestguard
 ```
 
-By default, the program starts the proxy server.
+With no subcommand, RequestGuard starts the proxy server.
 
-## CLI commands
+## CLI
 
-### Show active bans
+Show active bans:
 
 ```sh
 ./requestguard bans
 ```
 
-### Show cached IP reputation
+Show cached IP reputation:
 
 ```sh
 ./requestguard reputation
 ```
 
-### Remove expired records
+Remove expired records:
 
 ```sh
 ./requestguard purge
 ```
 
-### Check an IP with AbuseIPDB
+Check an IP with AbuseIPDB:
 
 ```sh
 ./requestguard check 8.8.8.8
 ```
 
-### Show help
+Show help:
 
 ```sh
 ./requestguard --help
@@ -193,13 +186,29 @@ By default, the program starts the proxy server.
 
 ## Port forwarding
 
+RequestGuard supports a fixed upstream port as well as same-port forwarding.
+
+### Fixed upstream
+
+With:
+
+```env
+LISTEN_PORT=8080
+UPSTREAM_HOST=127.0.0.1
+UPSTREAM_PORT=3000
+```
+
+requests received on port 8080 are forwarded to `127.0.0.1:3000`.
+
+### Same-port forwarding
+
 Set:
 
 ```env
 LISTEN_PORTS=all
 ```
 
-to inspect all available ports and forward a request to the same port on `127.0.0.1`.
+to listen on available external ports and forward each request to the same port on `127.0.0.1`.
 
 For example:
 
@@ -213,43 +222,31 @@ RequestGuard
 127.0.0.1:3000
 ```
 
-This allows multiple local services to remain bound to loopback while RequestGuard acts as the public filtering layer.
-
-## Public URL
-
-If the application needs to know its public URL, configure:
+Specific ports and ranges are also supported, for example:
 
 ```env
-PUBLIC_BASE_URL=https://example.com
+LISTEN_PORTS=80,443,3000-3010
 ```
 
-The application can continue listening on:
-
-```text
-127.0.0.1
-```
-
-while `PUBLIC_BASE_URL` represents the externally visible address.
+Busy ports are skipped.
 
 ## AbuseIPDB
 
 RequestGuard uses AbuseIPDB to obtain reputation information for previously unseen public IP addresses.
 
-The API key can be obtained from:
+The API key can be obtained from the AbuseIPDB account API page.
 
-https://www.abuseipdb.com/account/api
-
-If the reputation lookup fails, RequestGuard falls back to its stored ban, rate-limit, and request-format checks.
+If the reputation lookup fails, RequestGuard falls back to stored ban, rate-limit, and request-format checks rather than treating the lookup failure itself as an automatic allow.
 
 ## Data storage
 
-RequestGuard stores persistent state using SQLite.
+RequestGuard stores persistent state in SQLite.
 
-This includes information such as:
+Stored information includes:
 
-* Temporary IP bans
-* Cached IP reputation results
-* Expiration information
+- Temporary IP bans
+- Cached IP reputation results
+- Expiration information
 
 Expired records can be removed with:
 
@@ -257,9 +254,15 @@ Expired records can be removed with:
 ./requestguard purge
 ```
 
+The default database path is:
+
+```text
+data/requestguard.db
+```
+
 ## Security model
 
-RequestGuard is intended to sit between the public network and a local application:
+RequestGuard is intended to be one layer between the public network and a local application:
 
 ```text
 Public network
@@ -272,11 +275,9 @@ Public network
 127.0.0.1 application
 ```
 
-This means the upstream application does not need to be directly exposed to the network.
+RequestGuard is **not a replacement for a firewall, TLS termination, authentication, or a full WAF**.
 
-However, RequestGuard is **not a replacement for a firewall, TLS termination, authentication, or a full WAF**.
-
-Use it as one layer of a larger deployment when stronger protection is required.
+Use additional controls when your deployment requires stronger protection.
 
 ## Project structure
 
